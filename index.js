@@ -6,8 +6,10 @@ const path = require("path");
 const app = express();
 app.use(
     cors({
-        origin: "https://sound-harvest.vercel.app/",
-
+        origin: "https://sound-harvest.vercel.app",
+        methods: "GET,POST",
+        preflightContinue: false,
+        optionsSuccessStatus: 204,
     })
 )
 
