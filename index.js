@@ -3,10 +3,12 @@ const express = require("express")
 const cors = require("cors")
 const ytdl = require("ytdl-core");
 const path = require("path");
+const { uplpoadMp3 } = require("./utils/firebase");
+
 const app = express();
 app.use(
     cors({
-        origin: "https://sound-harvest.vercel.app",
+        origin: ["https://sound-harvest.vercel.app", "http://127.0.0.1:5173"],
         methods: "GET,POST",
         preflightContinue: false,
         optionsSuccessStatus: 204,
@@ -24,10 +26,11 @@ let videoUrl = "";
 
 
 
-const downloadDirectory = path.join(__dirname, "/downloadAudio") // Define el directorio
+const downloadDirectory = path.join(__dirname, "/tmp/downloadAudio") // Define el directorio
 
 //si no existe lo crea el directorio
 const fs = require("fs");
+
 if (!fs.existsSync(downloadDirectory)) {
     fs.mkdirSync(downloadDirectory);
 }
@@ -56,34 +59,39 @@ async function getTitleAndThumbnail(videoUrl) {
 }
 
 async function downloadAudio(videoUrl) {
+    try {
+        let options = {
+            format: "mp3",
+            quality: "highestaudio",
+            filter: "audio",
+        };
+        const { title } = await getTitleAndThumbnail(videoUrl);
+        const stream = ytdl(videoUrl, options);
 
-    let options = {
-        format: "mp3",
-        quality: "highestaudio",
-        filter: "audio",
-    };
-    const { title } = await getTitleAndThumbnail(videoUrl);
-    const stream = ytdl(videoUrl, options);
 
-    const filePath = `${downloadDirectory}/${title}.mp3`;
+        const filePath = `${downloadDirectory}/${title}.mp3`;
 
-    await new Promise((resolve, reject) => {
-        const audioFile = stream.pipe(require("fs").createWriteStream(filePath));
+        await new Promise((resolve, reject) => {
+            const audioFile = stream.pipe(require("fs").createWriteStream(filePath));
 
-        audioFile.on("finish", () => {
-            console.log("Audio downloaded");
-            resolve(filePath);
+            audioFile.on("finish", () => {
+                console.log("Audio downloaded");
+                resolve(filePath);
+            });
+
+            audioFile.on("error", (error) => {
+                console.error("Error downloading audio:", error);
+                reject(error);
+            });
         });
 
-        audioFile.on("error", (error) => {
-            console.error("Error downloading audio:", error);
-            reject(error);
-        });
-    });
+        return filePath;
 
-    return filePath;
+    } catch (error) {
+        console.log("Error", error);
+        throw new Error("Error promes", error);
+    }
 }
-
 
 
 app.post('/sendUrl', async (req, res) => {
@@ -107,17 +115,32 @@ app.post('/sendUrl', async (req, res) => {
 app.get('/downloads', async (req, res) => {
     try {
         const fileName = await downloadAudio(videoUrl);
+
+        const titlePromise = new Promise(async (resolve, reject) => {
+            try {
+                const { title } = await getTitleAndThumbnail(videoUrl);
+                resolve(title);
+            } catch (error) {
+                reject(error);
+            }
+        });
+
+        const title = await titlePromise;
+
+
+        const urlMp3 = await uplpoadMp3(fileName, title);
+
+
+
         const headers = {
             "Content-Disposition": `attachment; filename=${fileName}`,
             Authorization: "license ec2a55f4",
+        };
 
-        }
         res.set('Content-Type', 'audio/mpeg');
-        res.set(headers)
+        res.set(headers);
 
-
-        // Envía el archivo para descargar
-        res.download(fileName);
+        res.status(200).json({ link: urlMp3 });
 
     } catch (error) {
         res.status(500).send("Error downloading audio");
