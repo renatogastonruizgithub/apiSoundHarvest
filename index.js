@@ -26,7 +26,7 @@ let videoUrl = "";
 
 
 
-const downloadDirectory = path.join(__dirname, "/tmp/downloadAudio") // Define el directorio
+const downloadDirectory = path.join(__dirname, "/tmp") // Define el directorio
 
 //si no existe lo crea el directorio
 const fs = require("fs");
