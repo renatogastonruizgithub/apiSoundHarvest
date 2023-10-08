@@ -88,6 +88,7 @@ app.post('/sendUrl', async (req, res) => {
 app.post('/downloads', async (req, res) => {
     try {
         const { url } = req.body;
+        res.header('Access-Control-Allow-Origin', 'https://sound-harvest.vercel.app');
 
         res.set('Content-Type', 'audio/mpeg');
         const audioStream = await downloadAudio(url);
