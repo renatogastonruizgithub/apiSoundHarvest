@@ -2,7 +2,8 @@ const express = require("express")
 const cors = require("cors")
 const ytdl = require("ytdl-core");
 const path = require("path");
-
+const MemoryFS = require('memory-fs');
+const fs = new MemoryFS();
 
 const app = express();
 app.use(
@@ -89,10 +90,26 @@ app.post('/downloads', async (req, res) => {
     try {
         const { url } = req.body;
         res.header('Access-Control-Allow-Origin', 'https://sound-harvest.vercel.app');
+        fs.mkdirpSync('/mp3');
 
-        res.set('Content-Type', 'audio/mpeg');
         const audioStream = await downloadAudio(url);
-        audioStream.pipe(res)
+
+        const audioBuffer = [];
+        audioStream.on('data', (chunk) => {
+            audioBuffer.push(chunk);
+        });
+
+        audioStream.on('end', () => {
+            const audioData = Buffer.concat(audioBuffer);
+
+            // Escribe el audio en memoria
+            fs.writeFileSync('/mp3/audio.mp3', audioData);
+
+            // Ruta para servir el archivo mp3 en memoria
+            const mp3Data = fs.readFileSync('/mp3/audio.mp3'); // Lee el archivo en memoria
+            res.setHeader('Content-Type', 'audio/mpeg');
+            res.send(mp3Data);
+        });
 
     } catch (error) {
         res.status(500).send("Error downloading audio");
