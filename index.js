@@ -9,6 +9,7 @@ app.use(
     cors({
         origin: ["https://sound-harvest.vercel.app", "http://127.0.0.1:5173"],
         methods: "GET,POST",
+        allowedHeaders: ['Content-Type'], // Encabezados permitidos
         preflightContinue: false,
         optionsSuccessStatus: 204,
     })
@@ -84,11 +85,12 @@ app.post('/sendUrl', async (req, res) => {
 });
 
 
-app.get('/downloads', async (req, res) => {
+app.post('/downloads', async (req, res) => {
     try {
-        const videoUrl = req.query.videoUrl
+        const { url } = req.body;
+
         res.set('Content-Type', 'audio/mpeg');
-        const audioStream = await downloadAudio(videoUrl);
+        const audioStream = await downloadAudio(url);
         audioStream.pipe(res)
 
     } catch (error) {
