@@ -1,9 +1,8 @@
 const express = require("express")
-
 const cors = require("cors")
 const ytdl = require("ytdl-core");
 const path = require("path");
-const { uplpoadMp3 } = require("./utils/firebase");
+
 
 const app = express();
 app.use(
@@ -22,18 +21,9 @@ app.listen(port, () => {
     console.log(`http://localhost:${port}`);
 });
 
-let videoUrl = "";
 
 
 
-const downloadDirectory = path.join(__dirname, "/tmp") // Define el directorio
-
-//si no existe lo crea el directorio
-const fs = require("fs");
-
-if (!fs.existsSync(downloadDirectory)) {
-    fs.mkdirSync(downloadDirectory);
-}
 
 async function getTitleAndThumbnail(videoUrl) {
     try {
@@ -58,49 +48,31 @@ async function getTitleAndThumbnail(videoUrl) {
     }
 }
 
+
+
 async function downloadAudio(videoUrl) {
     try {
-        let options = {
+        const options = {
             format: "mp3",
             quality: "highestaudio",
             filter: "audio",
-        };
-        const { title } = await getTitleAndThumbnail(videoUrl);
-        const stream = ytdl(videoUrl, options);
-
-
-        const filePath = `${downloadDirectory}/${title}.mp3`;
-
-        await new Promise((resolve, reject) => {
-            const audioFile = stream.pipe(require("fs").createWriteStream(filePath));
-
-            audioFile.on("finish", () => {
-                console.log("Audio downloaded");
-                resolve(filePath);
-            });
-
-            audioFile.on("error", (error) => {
-                console.error("Error downloading audio:", error);
-                reject(error);
-            });
-        });
-
-        return filePath;
-
+        }
+        const stream = ytdl(videoUrl, options)
+        return stream
     } catch (error) {
         console.log("Error", error);
-        throw new Error("Error promes", error);
+        throw new Error("Error al descargar audio", error);
     }
 }
+
 
 
 app.post('/sendUrl', async (req, res) => {
     const { url } = req.body;
     if (typeof url === "string" && url.trim() !== "") {
-        videoUrl = url;
 
         try {
-            const { title, thumbnailUrl } = await getTitleAndThumbnail(videoUrl)
+            const { title, thumbnailUrl } = await getTitleAndThumbnail(url)
             res.status(200).json({ nameFile: title, image: thumbnailUrl });
         } catch (error) {
             return res.status(400).json({ error: error.message });
@@ -114,38 +86,22 @@ app.post('/sendUrl', async (req, res) => {
 
 app.get('/downloads', async (req, res) => {
     try {
-        const fileName = await downloadAudio(videoUrl);
-
-        const titlePromise = new Promise(async (resolve, reject) => {
-            try {
-                const { title } = await getTitleAndThumbnail(videoUrl);
-                resolve(title);
-            } catch (error) {
-                reject(error);
-            }
-        });
-
-        const title = await titlePromise;
-
-
-        const urlMp3 = await uplpoadMp3(fileName, title);
-
-
-
-        const headers = {
-            "Content-Disposition": `attachment; filename=${fileName}`,
-            Authorization: "license ec2a55f4",
-        };
-
+        const videoUrl = req.query.videoUrl
         res.set('Content-Type', 'audio/mpeg');
-        res.set(headers);
-
-        res.status(200).json({ link: urlMp3 });
+        const audioStream = await downloadAudio(videoUrl);
+        audioStream.pipe(res)
 
     } catch (error) {
         res.status(500).send("Error downloading audio");
     }
 });
+
+
+
+
+
+
+
 
 app.get('/', async (req, res) => {
     try {
