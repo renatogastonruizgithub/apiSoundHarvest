@@ -4,7 +4,14 @@ const ytdl = require("ytdl-core");
 const path = require("path");
 const MemoryFS = require('memory-fs');
 const fs = new MemoryFS();
+const { initializeApp } = require("firebase/app");
 
+const {
+    getStorage,
+    ref,
+    uploadBytes,
+    getDownloadURL,
+} = require("firebase/storage");
 const app = express();
 app.use(
     cors({
@@ -23,7 +30,17 @@ app.listen(port, () => {
     console.log(`http://localhost:${port}`);
 });
 
+const firebaseConfig = {
+    apiKey: "AIzaSyB7ueuh52WbicixzK2ArAgxQ1KrcUD-oPQ",
+    authDomain: "portafolio-ecd13.firebaseapp.com",
+    projectId: "portafolio-ecd13",
+    storageBucket: "portafolio-ecd13.appspot.com",
+    messagingSenderId: "285148909880",
+    appId: "1:285148909880:web:bdeff8fb5ca7b66161b1cd",
+};
 
+const apps = initializeApp(firebaseConfig);
+const storage = getStorage(apps);
 
 
 
@@ -90,7 +107,11 @@ app.post('/downloads', async (req, res) => {
     try {
         const { url } = req.body;
         res.header('Access-Control-Allow-Origin', 'https://sound-harvest.vercel.app');
-        fs.mkdirpSync('/mp3');
+
+        const path = '/mp3';
+
+        // Crea el directorio si no existe
+        fs.mkdirSync(path, { recursive: true });
 
         const audioStream = await downloadAudio(url);
 
@@ -99,16 +120,30 @@ app.post('/downloads', async (req, res) => {
             audioBuffer.push(chunk);
         });
 
-        audioStream.on('end', () => {
+        audioStream.on('end', async () => {
             const audioData = Buffer.concat(audioBuffer);
 
-            // Escribe el audio en memoria
-            fs.writeFileSync('/mp3/audio.mp3', audioData);
+            fs.writeFileSync(`${path}/audios.mp3`, audioData);
 
-            // Ruta para servir el archivo mp3 en memoria
-            const mp3Data = fs.readFileSync('/mp3/audio.mp3'); // Lee el archivo en memoria
-            res.setHeader('Content-Type', 'audio/mpeg');
-            res.send(mp3Data);
+            const filePath = `${path}/audios.mp3`;
+
+
+            try {
+                const metadata = {
+                    contentType: "audio/mpeg",
+                };
+                // Llama a la función upload para cargar el archivo
+                const fileData = fs.readFileSync(filePath); // Lee los datos del archivo en memoria
+                const uint8Array = new Uint8Array(fileData); // Convierte los datos a Uint8Array
+                console.log(fileData)
+                const storageRef = ref(storage, "mp3/");
+                await uploadBytes(storageRef, uint8Array, metadata);
+                const url = await getDownloadURL(storageRef);
+                res.setHeader('Content-Type', 'audio/mpeg');
+                res.json({ file: url });
+            } catch (error) {
+                res.status(500).send("Error uploading audio");
+            }
         });
 
     } catch (error) {
