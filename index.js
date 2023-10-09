@@ -128,16 +128,16 @@ app.post('/downloads', async (req, res) => {
             const filePath = `${path}/audios.mp3`;
 
 
-            try {
+            
                 
                 // Llama a la función upload para cargar el archivo
                 const fileData = fs.readFileSync(filePath); // Lee los datos del archivo en memoria
         
                 res.setHeader('Content-Type', 'audio/mpeg');
                 res.send(fileData);
-            } catch (error) {
-                res.status(500).send("Error uploading audio");
-            }
+            
+            
+            
         });
 
     } catch (error) {
