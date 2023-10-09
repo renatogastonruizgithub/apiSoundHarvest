@@ -4,14 +4,14 @@ const ytdl = require("ytdl-core");
 const path = require("path");
 const MemoryFS = require('memory-fs');
 const fs = new MemoryFS();
-const { initializeApp } = require("firebase/app");
+/*const { initializeApp } = require("firebase/app");
 
 const {
     getStorage,
     ref,
     uploadBytes,
     getDownloadURL,
-} = require("firebase/storage");
+} = require("firebase/storage");*/
 const app = express();
 app.use(
     cors({
@@ -30,7 +30,7 @@ app.listen(port, () => {
     console.log(`http://localhost:${port}`);
 });
 
-const firebaseConfig = {
+/*const firebaseConfig = {
     apiKey: "AIzaSyB7ueuh52WbicixzK2ArAgxQ1KrcUD-oPQ",
     authDomain: "portafolio-ecd13.firebaseapp.com",
     projectId: "portafolio-ecd13",
@@ -40,7 +40,7 @@ const firebaseConfig = {
 };
 
 const apps = initializeApp(firebaseConfig);
-const storage = getStorage(apps);
+const storage = getStorage(apps);*/
 
 
 
@@ -129,18 +129,12 @@ app.post('/downloads', async (req, res) => {
 
 
             try {
-                const metadata = {
-                    contentType: "audio/mpeg",
-                };
+                
                 // Llama a la función upload para cargar el archivo
                 const fileData = fs.readFileSync(filePath); // Lee los datos del archivo en memoria
-                const uint8Array = new Uint8Array(fileData); // Convierte los datos a Uint8Array
-                console.log(fileData)
-                const storageRef = ref(storage, "mp3/");
-                await uploadBytes(storageRef, uint8Array, metadata);
-                const url = await getDownloadURL(storageRef);
+        
                 res.setHeader('Content-Type', 'audio/mpeg');
-                res.json({ file: url });
+                res.send(fileData);
             } catch (error) {
                 res.status(500).send("Error uploading audio");
             }
