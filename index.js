@@ -147,7 +147,7 @@ app.post('/downloads', async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).send("Error downloading audio");
+        res.status(500).send("Error downloading audio", error);
     }
 });
 
