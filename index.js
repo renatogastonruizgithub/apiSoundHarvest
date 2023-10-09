@@ -106,7 +106,6 @@ app.post('/sendUrl', async (req, res) => {
 app.post('/downloads', async (req, res) => {
     try {
         const { url } = req.body;
-        res.header('Access-Control-Allow-Origin', 'https://sound-harvest.vercel.app');
 
         const path = '/mp3';
 
@@ -126,22 +125,13 @@ app.post('/downloads', async (req, res) => {
             fs.writeFileSync(`${path}/audios.mp3`, audioData);
 
             const filePath = `${path}/audios.mp3`;
-
-
-            
-                
-                // Llama a la función upload para cargar el archivo
-                const fileData = fs.readFileSync(filePath); // Lee los datos del archivo en memoria
-        
-                res.setHeader('Content-Type', 'audio/mpeg');
-                res.download(fileData,"audio.mp3");
-            
-            
-            
+            const fileData = fs.readFileSync(filePath);
+            res.setHeader('Content-Type', 'audio/mpeg');
+            res.status(200).send(fileData);
         });
 
     } catch (error) {
-        res.status(500).send("Error downloading audio", error);
+        res.status(500).send("Error downloading audio" + error);
     }
 });
 
