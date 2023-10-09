@@ -134,7 +134,7 @@ app.post('/downloads', async (req, res) => {
                 const fileData = fs.readFileSync(filePath); // Lee los datos del archivo en memoria
         
                 res.setHeader('Content-Type', 'audio/mpeg');
-                res.download(fileData);
+                res.download(fileData,"audio.mp3");
             
             
             
