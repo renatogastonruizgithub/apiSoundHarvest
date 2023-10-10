@@ -3,15 +3,8 @@ const cors = require("cors")
 const ytdl = require("ytdl-core");
 const path = require("path");
 const MemoryFS = require('memory-fs');
-const fs = new MemoryFS();
-/*const { initializeApp } = require("firebase/app");
+const memoryFs = new MemoryFS();
 
-const {
-    getStorage,
-    ref,
-    uploadBytes,
-    getDownloadURL,
-} = require("firebase/storage");*/
 const app = express();
 app.use(
     cors({
@@ -25,24 +18,34 @@ app.use(
 
 
 app.use(express.json());
+
 const port = 8080;
-app.listen(port, () => {
-    console.log(`http://localhost:${port}`);
-});
 
-/*const firebaseConfig = {
-    apiKey: "AIzaSyB7ueuh52WbicixzK2ArAgxQ1KrcUD-oPQ",
-    authDomain: "portafolio-ecd13.firebaseapp.com",
-    projectId: "portafolio-ecd13",
-    storageBucket: "portafolio-ecd13.appspot.com",
-    messagingSenderId: "285148909880",
-    appId: "1:285148909880:web:bdeff8fb5ca7b66161b1cd",
-};
-
-const apps = initializeApp(firebaseConfig);
-const storage = getStorage(apps);*/
+const pathMemori = "/mp3";
+const fileTimestamps = {}; // Objeto para rastrear la hora en que se almacenó cada archivo
 
 
+memoryFs.mkdirSync(pathMemori, { recursive: true });// Crea el directorio si no existe
+
+function storeFileInMemoryFs(fileName, fileData) {
+
+    const filePath = `${pathMemori}/${fileName}`
+    memoryFs.writeFileSync(filePath, fileData)
+    fileTimestamps[fileName] = new Date().getTime() // Registrar la hora de almacenamiento
+    return filePath
+}
+
+function cleanMemoryFs() {
+
+    const filesInMemoryFs = memoryFs.readdirSync(pathMemori);
+
+    console.log('Archivos en memoria:');
+    filesInMemoryFs.forEach((fileName) => {
+        memoryFs.unlinkSync(`${pathMemori}/${fileName}`);
+        delete fileTimestamps[fileName];
+        console.log(`Eliminado de memory-fs: ${fileName}`);
+    });
+}
 
 async function getTitleAndThumbnail(videoUrl) {
     try {
@@ -85,6 +88,10 @@ async function downloadAudio(videoUrl) {
 }
 
 
+app.listen(port, () => {
+    console.log(`http://localhost:${port}`);
+});
+
 
 app.post('/sendUrl', async (req, res) => {
     const { url } = req.body;
@@ -93,6 +100,7 @@ app.post('/sendUrl', async (req, res) => {
         try {
             const { title, thumbnailUrl } = await getTitleAndThumbnail(url)
             res.status(200).json({ nameFile: title, image: thumbnailUrl });
+            cleanMemoryFs();
         } catch (error) {
             return res.status(400).json({ error: error.message });
         }
@@ -104,13 +112,14 @@ app.post('/sendUrl', async (req, res) => {
 
 
 app.post('/downloads', async (req, res) => {
+
+
     try {
         const { url } = req.body;
 
-        const path = '/mp3';
+        const timestamp = new Date().getTime();
+        const fileName = `${timestamp}.mp3`;
 
-        // Crea el directorio si no existe
-        fs.mkdirSync(path, { recursive: true });
 
         const audioStream = await downloadAudio(url);
 
@@ -122,23 +131,20 @@ app.post('/downloads', async (req, res) => {
         audioStream.on('end', async () => {
             const audioData = Buffer.concat(audioBuffer);
 
-            fs.writeFileSync(`${path}/audios.mp3`, audioData);
+            const store = storeFileInMemoryFs(fileName, audioData);
 
-            const filePath = `${path}/audios.mp3`;
-            const fileData = fs.readFileSync(filePath);
+            console.log(`Audio generado en memory-fs: ${store}`);
+            const fileData = memoryFs.readFileSync(store);
             res.setHeader('Content-Type', 'audio/mpeg');
             res.status(200).send(fileData);
-        });
 
+        });
+        cleanMemoryFs();
+        /*  setInterval(cleanMemoryFs, 1000); */
     } catch (error) {
         res.status(500).send("Error downloading audio" + error);
     }
 });
-
-
-
-
-
 
 
 
