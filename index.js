@@ -38,8 +38,12 @@ function storeFileInMemoryFs(fileName, fileData) {
 function cleanMemoryFs() {
 
     const filesInMemoryFs = memoryFs.readdirSync(pathMemori);
-
     console.log('Archivos en memoria:');
+    if (filesInMemoryFs.length === 0) {
+        console.log('La memoria está vacía. No se realizó ninguna limpieza.');
+        return;
+    }
+
     filesInMemoryFs.forEach((fileName) => {
         memoryFs.unlinkSync(`${pathMemori}/${fileName}`);
         delete fileTimestamps[fileName];
