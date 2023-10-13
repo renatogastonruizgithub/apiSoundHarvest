@@ -78,12 +78,15 @@ async function getTitleAndThumbnail(videoUrl) {
 
 async function downloadAudio(videoUrl) {
     try {
-        const options = {
-            format: "mp3",
-            quality: "highestaudio",
-            filter: "audio",
+        const info = await ytdl.getInfo(videoUrl);
+        const formats = ytdl.filterFormats(info.formats, 'audioonly');
+
+        if (formats.length === 0) {
+            throw new Error("No format found for audio download");
         }
-        const stream = ytdl(videoUrl, options)
+        // Descargar el formato de audio de mejor calidad disponible
+        const stream = ytdl.downloadFromInfo(info, { format: formats[0] });
+
         return stream
     } catch (error) {
         console.log("Error", error);
