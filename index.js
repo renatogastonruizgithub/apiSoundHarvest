@@ -4,7 +4,7 @@ const ytdl = require("ytdl-core");
 const path = require("path");
 const MemoryFS = require('memory-fs');
 const memoryFs = new MemoryFS();
-
+const search = require('yt-search');
 const app = express();
 app.use(
     cors({
@@ -153,7 +153,24 @@ app.post('/downloads', async (req, res) => {
     }
 });
 
+app.post("/search", (req, res) => {
+    const query = req.body.query;
 
+    search(query, (err, r) => {
+        if (err) {
+            res.status(500).send(err);
+        } else {
+            // Filtrar los resultados para excluir LiveSearchResult
+            const videos = r.videos.filter((video) => video.type === 'video')
+                .map((video) => ({
+                    title: video.title,
+                    url: video.url,
+                    thumbnail: video.thumbnail,
+                }));
+            res.status(200).json(videos);
+        }
+    });
+});
 
 app.get('/', async (req, res) => {
     try {
