@@ -106,7 +106,7 @@ app.post('/sendUrl', async (req, res) => {
 
         try {
             const { title, thumbnailUrl } = await getTitleAndThumbnail(url)
-            res.status(200).json({ nameFile: title, image: thumbnailUrl });
+            res.status(200).json({ title: title, thumbnail: thumbnailUrl });
             cleanMemoryFs();
         } catch (error) {
             return res.status(400).json({ error: error.message });
@@ -120,14 +120,11 @@ app.post('/sendUrl', async (req, res) => {
 
 app.post('/downloads', async (req, res) => {
 
-
     try {
         const { url } = req.body;
 
         const timestamp = new Date().getTime();
         const fileName = `${timestamp}.mp3`;
-
-
         const audioStream = await downloadAudio(url);
 
         const audioBuffer = [];
