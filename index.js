@@ -113,7 +113,7 @@ app.post('/sendUrl', async (req, res) => {
     try {
         if (IsUrlLive(url)) {
             console.log(IsUrlLive(url))
-            res.status(400).json({ message: "¡Ups!, no se pueden descargar videos en vivo" })
+            res.status(400).json({ error: "¡Ups!, no se pueden descargar videos en vivo" })
             throw new Error("¡Ups!, no se pueden descargar videos en vivo")
         } else {
             if (isValidURL) {
@@ -131,7 +131,7 @@ app.post('/sendUrl', async (req, res) => {
                     res.status(400).json({ error: "Formato incorrecto de URL" })
                 }
             } else {
-                res.status(400).json({ message: "URL o ID de video incorrecto" })
+                res.status(400).json({ error: "URL o ID de video incorrecto" })
             }
         }
     } catch (error) {
@@ -146,7 +146,7 @@ app.post('/downloads', async (req, res) => {
     try {
 
         if (IsUrlLive(url)) {
-            res.status(400).json({ message: "¡Ups!, no se pueden descargar videos en vivo" });
+            res.status(400).json({ error: "¡Ups!, no se pueden descargar videos en vivo" });
 
         } else {
             const timestamp = new Date().getTime();
