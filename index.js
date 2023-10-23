@@ -51,27 +51,29 @@ function cleanMemoryFs() {
     });
 }
 
+
+
 async function getTitleAndThumbnail(videoUrl) {
     try {
-        const info = await ytdl.getBasicInfo(videoUrl)
-        const videoDetails = info.videoDetails
-
-        // Obtener el título del video
-        const title = videoDetails.title.replace(/[^a-zA-Z0-9]/g, ' ')
-
-        // Obtener la URL de la primera miniatura (thumbnail)
-        const thumbnailUrl = videoDetails.thumbnails[0].url
-
-        return {
-            title: title,
-            thumbnailUrl: thumbnailUrl,
+        const info = await ytdl.getBasicInfo(videoUrl);
+        if (info.player_response.videoDetails.isLive) {
+            throw new Error("¡Ups!, No se puede descargar videos en vivo");
+        } else {
+            // Obtener el título del video
+            const videoDetails = info.videoDetails;
+            const title = videoDetails.title.replace(/[^a-zA-Z0-9]/g, ' ');
+            // Obtener la URL de la primera miniatura (thumbnail)
+            const thumbnailUrl = videoDetails.thumbnails[0].url;
+            return {
+                title: title,
+                thumbnailUrl: thumbnailUrl,
+            };
         }
+    } catch (error) {
+
+        throw new Error(error.message);
     }
 
-    catch (error) {
-        console.error("¡Ups!, enlace de YouTube incorrecto", error)
-        throw new Error("¡Ups!, enlace de YouTube incorrecto");
-    }
 }
 
 
@@ -99,56 +101,84 @@ app.listen(port, () => {
     console.log(`http://localhost:${port}`);
 });
 
+function IsUrlLive(url) {
+    const youtubeUrlLive = "https://www.youtube.com/live/"
+    return url.includes(youtubeUrlLive);
+}
 
 app.post('/sendUrl', async (req, res) => {
-    const { url } = req.body;
-    if (typeof url === "string" && url.trim() !== "") {
+    const { url } = req.body
+    let isValidURL = ytdl.validateURL(url)
 
-        try {
-            const { title, thumbnailUrl } = await getTitleAndThumbnail(url)
-            res.status(200).json({ title: title, thumbnail: thumbnailUrl });
-            cleanMemoryFs();
-        } catch (error) {
-            return res.status(400).json({ error: error.message });
+    try {
+        if (IsUrlLive(url)) {
+            console.log(IsUrlLive(url))
+            res.status(400).json({ message: "¡Ups!, no se pueden descargar videos en vivo" })
+            throw new Error("¡Ups!, no se pueden descargar videos en vivo")
+        } else {
+            if (isValidURL) {
+                if (typeof url === "string" && url.trim() !== "") {
+                    try {
+                        const { title, thumbnailUrl } = await getTitleAndThumbnail(url)
+                        res.status(200).json({ title: title, thumbnail: thumbnailUrl })
+                        cleanMemoryFs()
+
+                    } catch (error) {
+                        res.status(400).json({ error: error.message })
+                    }
+
+                } else {
+                    res.status(400).json({ error: "Formato incorrecto de URL" })
+                }
+            } else {
+                res.status(400).json({ message: "URL o ID de video incorrecto" })
+            }
         }
-
-    } else {
-        res.status(400).json({ error: "Invalid video URL format." });
+    } catch (error) {
+        console.error("Error:", error.message)
     }
 });
 
 
 app.post('/downloads', async (req, res) => {
+    const { url } = req.body;
 
     try {
-        const { url } = req.body;
 
-        const timestamp = new Date().getTime();
-        const fileName = `${timestamp}.mp3`;
-        const audioStream = await downloadAudio(url);
+        if (IsUrlLive(url)) {
+            res.status(400).json({ message: "¡Ups!, no se pueden descargar videos en vivo" });
 
-        const audioBuffer = [];
-        audioStream.on('data', (chunk) => {
-            audioBuffer.push(chunk);
-        });
+        } else {
+            const timestamp = new Date().getTime();
+            const fileName = `${timestamp}.mp3`;
+            const audioStream = await downloadAudio(url);
 
-        audioStream.on('end', async () => {
-            const audioData = Buffer.concat(audioBuffer);
+            const audioBuffer = [];
+            audioStream.on('data', (chunk) => {
+                audioBuffer.push(chunk);
+            });
 
-            const store = storeFileInMemoryFs(fileName, audioData);
+            audioStream.on('end', async () => {
+                const audioData = Buffer.concat(audioBuffer);
 
-            console.log(`Audio generado en memory-fs: ${store}`);
-            const fileData = memoryFs.readFileSync(store);
-            res.setHeader('Content-Type', 'audio/mpeg');
-            res.status(200).send(fileData);
+                const store = storeFileInMemoryFs(fileName, audioData);
 
-        });
-        cleanMemoryFs();
-        /*  setInterval(cleanMemoryFs, 1000); */
+                console.log(`Audio generado en memory-fs: ${store}`);
+                const fileData = memoryFs.readFileSync(store);
+                res.setHeader('Content-Type', 'audio/mpeg');
+                res.status(200).send(fileData);
+
+            });
+            cleanMemoryFs();
+        }
+
     } catch (error) {
-        res.status(500).send("Error downloading audio" + error);
+        console.error("Error:", error.message);
+        res.status(500).send(error.message);
     }
 });
+
+
 
 app.post("/search", (req, res) => {
     const query = req.body.query;
@@ -159,16 +189,19 @@ app.post("/search", (req, res) => {
         } else {
             // Filtrar los resultados para excluir LiveSearchResult
             const videos = r.videos.filter((video) => video.type === 'video')
-                .map((video) => ({
-                    title: video.title,
-                    url: video.url,
-                    thumbnail: video.thumbnail,
-                }));
+                .map((video) => {
+                    const videoId = ytdl.getURLVideoID(video.url);
+                    return {
+                        title: video.title.toLowerCase(),
+                        url: video.url,
+                        thumbnail: video.thumbnail,
+                        videoId: videoId, // Aquí añadimos la ID del video
+                    };
+                });
             res.status(200).json(videos);
         }
     });
 });
-
 app.get('/', async (req, res) => {
     try {
 
