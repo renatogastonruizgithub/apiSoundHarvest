@@ -1,4 +1,5 @@
-const service = require('../services/service');
+const { searchVideos } = require('../services/search');
+
 
 const search = async (req, res) => {
     const query = req.body.query;
@@ -7,7 +8,7 @@ const search = async (req, res) => {
         if (!query) {
             throw new Error("No se envio la consulta")
         }
-        service.searchVideos(query, (err, videos) => {
+        searchVideos(query, (err, videos) => {
             if (err) {
                 throw new Error("No se encontraron videos")
             } else {

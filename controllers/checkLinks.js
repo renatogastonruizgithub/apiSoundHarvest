@@ -1,4 +1,5 @@
-const { isUrlLive, getTitleAndThumbnail, isValidURL, cleanMemoryFs } = require('../services/service');
+const { cleanMemoryFs } = require("../services/donwloadMp3")
+const { isUrlLive, isValidURL, getTitleAndThumbnail } = require("../utils/helpers")
 
 const checkLink = async (req, res) => {
 
