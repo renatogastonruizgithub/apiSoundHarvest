@@ -29,9 +29,8 @@ const downloadMp4 = async (req, res) => {
         }
 
         const store = await downloadMp4Service(url, mediaType)
+        res.status(200).json({ link: store })
 
-        res.setHeader('Content-Type', 'video/mp4');
-        res.status(200).json(store);
     } catch (error) {
         console.error("Error:", error.message);
         res.status(500).json({ error: error.message });

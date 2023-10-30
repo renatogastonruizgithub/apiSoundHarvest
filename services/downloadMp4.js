@@ -14,22 +14,23 @@ const downloadMp4Service = async (url, mediaType) => {
     const audioStream = await downloadMedia(url, mediaType)
 
     const audioBuffer = []
-    audioStream.on('data', (chunk) => {
-        audioBuffer.push(chunk)
 
-    });
 
     return new Promise((resolve, reject) => {
+        audioStream.on('data', (chunk) => {
+            audioBuffer.push(chunk);
+        });
+
         audioStream.on('end', async () => {
-            const audioData = Buffer.concat(audioBuffer)
             try {
+                const audioData = Buffer.concat(audioBuffer);
                 const cloudinaryUrl = await uploadVideoToCloudinaryFromStream(audioData);
-                console.log(cloudinaryUrl);
-                resolve({ link: cloudinaryUrl });
+
+                resolve(cloudinaryUrl);
             } catch (error) {
-                reject(error)
+                reject(error);
             }
-        })
+        });
         audioStream.on('error', (error) => {
             reject(error)
         });
