@@ -4,7 +4,7 @@ const cors = require("cors")
 const indexRouter = require("./routes/index")
 const port = 8080;
 const app = express();
-
+const { conexion } = require("./database/conexion")
 app.use(
     cors({
         origin: ["https://sound-harvest.vercel.app", "http://127.0.0.1:5173"],
@@ -14,7 +14,7 @@ app.use(
         optionsSuccessStatus: 204,
     })
 )
-
+conexion()
 
 app.use(express.json());
 app.use("/", indexRouter);

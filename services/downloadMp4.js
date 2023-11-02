@@ -1,3 +1,4 @@
+const { Video } = require("../database/models/video")
 const { uploadVideoToCloudinaryFromStream } = require("../utils/claurinary")
 const { isUrlLive, isVideoLive, downloadMedia } = require("../utils/helpers")
 
@@ -24,9 +25,16 @@ const downloadMp4Service = async (url, mediaType) => {
         audioStream.on('end', async () => {
             try {
                 const audioData = Buffer.concat(audioBuffer);
-                const cloudinaryUrl = await uploadVideoToCloudinaryFromStream(audioData);
+             /*    const cloudinaryUrl = await uploadVideoToCloudinaryFromStream(audioData);
+ */           const video = new Video({
+                    title: 'Mi video',
+                    videoData: audioData,
+                    contentType: 'video/mp4',
+                });
+                video.save()
+                const result = await Video.findById(video._id)
 
-                resolve(cloudinaryUrl);
+                resolve(result.videoData);
             } catch (error) {
                 reject(error);
             }
