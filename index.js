@@ -14,7 +14,10 @@ app.use(
         optionsSuccessStatus: 204,
     })
 )
-conexion()
+    (async () => {
+        await conexion()
+    })
+
 
 app.use(express.json());
 app.use("/", indexRouter);
