@@ -1,7 +1,7 @@
-
 const MemoryFS = require('memory-fs');
-const { isUrlLive, isVideoLive, downloadMedia } = require('../utils/helpers');
 const memoryFs = new MemoryFS();
+const { isUrlLive, isVideoLive, downloadMedia } = require('../utils/helpers');
+
 
 const pathMemori = "/mp3";
 const fileTimestamps = {}; // Objeto para rastrear la hora en que se almacenó cada archivo
@@ -77,4 +77,4 @@ const downloadMp3Service = async (url, mediaType) => {
 
 
 
-module.exports = { cleanMemoryFs, downloadMp3Service }
+module.exports = { cleanMemoryFs, downloadMp3Service, }
