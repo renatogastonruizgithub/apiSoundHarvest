@@ -14,9 +14,8 @@ app.use(
         optionsSuccessStatus: 204,
     })
 )
-    (async () => {
-        await conexion()
-    })
+
+conexion();
 
 
 app.use(express.json());

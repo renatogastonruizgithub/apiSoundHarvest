@@ -1,4 +1,4 @@
-require("dotenv").config()
+
 const { connect } = require('mongoose')
 
 async function conexion() {
