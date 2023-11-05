@@ -7,7 +7,7 @@ const app = express();
 
 app.use(
     cors({
-        origin: ["https://sound-harvest.vercel.app", "http://127.0.0.1:5173"],
+        origin: [process.env.CLIENT, process.env.LOCAL],
         methods: "GET,POST",
         allowedHeaders: ['Content-Type'], // Encabezados permitidos
         preflightContinue: false,
