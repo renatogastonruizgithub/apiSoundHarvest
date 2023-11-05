@@ -28,13 +28,14 @@ const downloadMp4Service = async (url, mediaType) => {
              /*    const cloudinaryUrl = await uploadVideoToCloudinaryFromStream(audioData);
  */           const video = new Video({
                     title: 'Mi video',
-                    data: audioData,
+                    dataVideo: audioData,
                     contentType: 'video/mp4',
                 });
                 video.save()
+                console.log("Video guardado con ID:", video._id);
                 const result = await Video.findById(video._id)
-
-                resolve(result.data);
+                console.log("Video encontrado en la base de datos:", result);
+                resolve(result.dataVideo);
             } catch (error) {
                 reject(error);
             }

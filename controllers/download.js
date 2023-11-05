@@ -30,7 +30,7 @@ const downloadMp4 = async (req, res) => {
 
         const store = await downloadMp4Service(url, mediaType)
         res.setHeader('Content-Type', 'video/mp4');
-        res.status(200).end(store)
+        res.status(200).send(store)
 
     } catch (error) {
         console.error("Error:", error.message);

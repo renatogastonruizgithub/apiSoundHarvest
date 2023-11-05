@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 // Define un esquema para los datos del vídeo
 const videoSchema = new mongoose.Schema({
     title: String,
-    data: Buffer,
+    dataVideo: Buffer,
     contentType: String,
 }, {
     timestamps: true,
