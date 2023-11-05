@@ -28,13 +28,13 @@ const downloadMp4Service = async (url, mediaType) => {
              /*    const cloudinaryUrl = await uploadVideoToCloudinaryFromStream(audioData);
  */           const video = new Video({
                     title: 'Mi video',
-                    videoData: audioData,
+                    data: audioData,
                     contentType: 'video/mp4',
                 });
                 video.save()
                 const result = await Video.findById(video._id)
 
-                resolve(result.videoData);
+                resolve(result.data);
             } catch (error) {
                 reject(error);
             }
